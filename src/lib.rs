@@ -34,7 +34,6 @@ impl Detectron2ONNXModel {
     const DEFAULT_CONFIDENCE_THRESHOLD: f32 = 0.8;
 
     pub fn new(model_type: ModelType) -> Result<Self> {
-        // TODO: remove unwraps
         let api = hf_hub::api::sync::Api::new()?;
         let filename = api
             .model(model_type.hf_repo().to_string())
@@ -54,7 +53,6 @@ impl Detectron2ONNXModel {
         session_builder: SessionBuilder,
         confidence_threshold: f32,
     ) -> Result<Self> {
-        // TODO: remove unwraps
         let api = hf_hub::api::sync::Api::new()?;
         let filename = api
             .model(model_type.hf_repo().to_string())
