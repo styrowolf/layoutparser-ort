@@ -10,5 +10,9 @@ hf-hub = "0.3.2"
 image = "0.25.1"
 ndarray = "0.15.6"
 ort = "2.0.0-rc.2"
+serde = { version = "1.0.199", features = ["derive"], optional = true }
 thiserror = "1.0.59"
 tracing = "0.1.40"
+
+[[example]]
+name = "predict"

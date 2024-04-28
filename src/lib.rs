@@ -11,6 +11,7 @@ fn vec_to_bbox<T: Copy>(v: Vec<T>) -> [T; 4] {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LayoutElement {
     pub x1: f32,
     pub y1: f32,
@@ -162,9 +163,12 @@ impl Detectron2ONNXModel {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ModelType {
+    #[cfg_attr(feature = "serde", serde(rename = "unstructuredio/detectron2_faster_rcnn_R_50_FPN_3x"))]
     FasterRCNN,
+    #[cfg_attr(feature = "serde", serde(rename = "unstructuredio/detectron2_mask_rcnn_X_101_32x8d_FPN_3x"))]
     MaskRCNN,
 }
 
@@ -180,5 +184,19 @@ impl ModelType {
         match self {
             _ => "model.onnx",
         }
+    }
+
+    pub fn from_hf_repo(repo: &str) -> Option<Self> {
+        match repo {
+            "unstructuredio/detectron2_faster_rcnn_R_50_FPN_3x" => Some(Self::FasterRCNN),
+            "unstructuredio/detectron2_mask_rcnn_X_101_32x8d_FPN_3x" => Some(Self::MaskRCNN),
+            _ => None
+        }
+    }
+}
+
+impl std::fmt::Debug for ModelType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.hf_repo())
     }
 }

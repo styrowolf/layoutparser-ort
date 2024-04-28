@@ -616,6 +616,7 @@ dependencies = [
  "image",
  "ndarray",
  "ort",
+ "serde",
  "thiserror",
  "tracing",
 ]
