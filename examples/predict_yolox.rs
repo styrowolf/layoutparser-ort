@@ -1,9 +1,12 @@
-use layoutparser_ort::{Detectron2ONNXModel, Result};
+use layoutparser_ort::{
+    models::yolox::{YOLOXModel, YOLOXPretrainedModel},
+    Result,
+};
 
 fn main() -> Result<()> {
     let img = image::open("examples/data/paper-example.png").unwrap();
 
-    let model = Detectron2ONNXModel::new(layoutparser_ort::ModelType::FasterRCNN)?;
+    let model = YOLOXModel::pretrained(YOLOXPretrainedModel::Tiny)?;
 
     let predictions = model.predict(&img)?;
 
