@@ -202,16 +202,18 @@ impl YOLOXModel {
                     let [x1, y1, x2, y2, prob, class_id] =
                         extract_bbox_etc(&det.into_iter().copied().collect());
                     let detected_class = self.get_label(class_id as i64);
-                    regions.push(LayoutElement {
+                    regions.push(LayoutElement::new(
                         x1,
                         y1,
                         x2,
                         y2,
-                        element_type: detected_class,
-                        probability: prob,
-                        source: self.model_name.clone(),
-                    })
+                        &detected_class,
+                        prob,
+                        &self.model_name,
+                    ));
                 }
+
+                regions.sort_by(|a, b| a.bbox.max().y.total_cmp(&b.bbox.max().y));
 
                 return Ok(regions);
             }

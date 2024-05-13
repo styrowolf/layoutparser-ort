@@ -14,6 +14,10 @@ where
     indices
 }
 
+pub(crate) fn vec_to_bbox<T: Copy>(v: Vec<T>) -> [T; 4] {
+    return [v[0], v[1], v[2], v[3]];
+}
+
 #[cfg(feature = "save")]
 pub mod save {
     use ndarray::{Array1, Array2};

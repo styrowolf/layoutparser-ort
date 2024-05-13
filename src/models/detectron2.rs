@@ -3,7 +3,7 @@ use ndarray::{Array, ArrayBase, Dim, OwnedRepr};
 use ort::{Session, SessionBuilder, SessionOutputs};
 
 pub use crate::error::{Error, Result};
-use crate::LayoutElement;
+use crate::{utils::vec_to_bbox, LayoutElement};
 
 pub struct Detectron2Model {
     model_name: String,
@@ -207,24 +207,20 @@ impl Detectron2Model {
                 .1;
 
             if *confidence_score > self.confidence_threshold as f32 {
-                elements.push(LayoutElement {
-                    x1: (x1 * width_conversion),
-                    y1: (y1 * height_conversion),
-                    x2: (x2 * width_conversion),
-                    y2: (y2 * height_conversion),
-                    element_type: detected_label.to_string(),
-                    probability: *confidence_score,
-                    source: self.model_name.clone(),
-                })
+                elements.push(LayoutElement::new(
+                    x1 * width_conversion,
+                    y1 * height_conversion,
+                    x2 * width_conversion,
+                    y2 * height_conversion,
+                    &detected_label,
+                    *confidence_score,
+                    &self.model_name,
+                ))
             }
         }
 
-        elements.sort_by(|a, b| a.y1.total_cmp(&b.y1));
+        elements.sort_by(|a, b| a.bbox.max().y.total_cmp(&b.bbox.max().y));
 
         return Ok(elements);
     }
-}
-
-fn vec_to_bbox<T: Copy>(v: Vec<T>) -> [T; 4] {
-    return [v[0], v[1], v[2], v[3]];
 }
