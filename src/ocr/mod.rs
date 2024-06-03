@@ -1,28 +1,47 @@
+//! OCR agents and utilities for extracting text.
+
 mod hocr_ext;
 
 use hocr_ext::HOCRElementConversion;
 pub use hocr_ext::HOCRElementConversionError;
 
-use hocr_parser::element::Element;
 use hocr_parser::spec_definitions::elements;
+use hocr_parser::Element;
 use hocr_parser::HOCRParserError;
+pub use hocr_parser::roxmltree;
+
+pub use hocr_parser;
 
 use crate::{LayoutElement, Result};
 use tesseract::{Tesseract, TesseractError};
 
+/// The Tesseract OCR Agent.
+/// 
+/// Constructing the agent may require a valid `tessdata`` directory 
+/// depending on the constructor.
 pub struct TesseractAgent {
     arguments: TesseractInitArguments,
     inner: Option<tesseract::Tesseract>,
 }
 
-pub enum TesseractInitArguments {
-    Data { data: Vec<u8>, lang: String },
-    DataPath { data_path: String, lang: String },
+enum TesseractInitArguments {
+    Data {
+        data: Vec<u8>,
+        lang: String,
+    },
+    DataPath {
+        data_path: String,
+        lang: String,
+    },
     Default,
-    Generic { data_path: Option<String>, lang: Option<String> },
+    Generic {
+        data_path: Option<String>,
+        lang: Option<String>,
+    },
 }
 
 impl TesseractAgent {
+    /// Construct a new [`TesseractAgent`].
     pub fn new() -> Result<Self> {
         let arguments = TesseractInitArguments::Default;
 
@@ -34,11 +53,15 @@ impl TesseractAgent {
         })
     }
 
+    /// Construct a new [`TesseractAgent`] specifying the OCR languages.
     pub fn new_with_lang(lang: &[&str]) -> Result<Self> {
         let lang = lang.join("+");
         let inner = Tesseract::new(None, Some(&lang)).map_err(|err| TesseractError::from(err))?;
 
-        let arguments = TesseractInitArguments::Generic { data_path: None, lang: Some(lang.to_string()) };
+        let arguments = TesseractInitArguments::Generic {
+            data_path: None,
+            lang: Some(lang.to_string()),
+        };
 
         Ok(Self {
             inner: Some(inner),
@@ -46,6 +69,7 @@ impl TesseractAgent {
         })
     }
 
+    /// Construct a new [`TesseractAgent`] with the tessdata file and specifying the OCR languages.
     pub fn new_with_data(data: &[u8], lang: &[&str]) -> Result<Self> {
         let lang = lang.join("+");
         let inner = Tesseract::new_with_data(data, Some(&lang), tesseract::OcrEngineMode::Default)
@@ -62,6 +86,7 @@ impl TesseractAgent {
         })
     }
 
+    /// Construct a new [`TesseractAgent`] with the tessdata path and specfiying the OCR languages.
     pub fn new_data_path(data_path: &str, lang: &[&str]) -> Result<Self> {
         let lang = lang.join("+");
         // data_path is tessdata, which includes the traineddata files
@@ -99,14 +124,14 @@ impl TesseractAgent {
             )
             .unwrap(),
             TesseractInitArguments::Default => Tesseract::new(None, None).unwrap(),
-            TesseractInitArguments::Generic { data_path, lang } => Tesseract::new(
-                data_path.as_deref(),
-                lang.as_deref(),
-            ).unwrap(),
+            TesseractInitArguments::Generic { data_path, lang } => {
+                Tesseract::new(data_path.as_deref(), lang.as_deref()).unwrap()
+            }
         };
         self.inner = Some(tesseract);
     }
 
+    /// Extracts the text within a [`LayoutElement`] and adds it to the element.
     pub fn extract_text_to_lm(
         &mut self,
         lm: &mut LayoutElement,
@@ -118,6 +143,7 @@ impl TesseractAgent {
         Ok(())
     }
 
+    /// Extracts the text from an image.
     pub fn extract_text(&mut self, img: &image::DynamicImage) -> Result<String> {
         let img = img.to_rgba8();
         let (width, height) = img.dimensions();
@@ -149,6 +175,7 @@ impl TesseractAgent {
         Ok(text)
     }
 
+    /// Extracts the text regions as [`LayoutElement`] according to the OCR [`FeatureType`] from an image.
     pub fn extract(
         &mut self,
         img: &image::DynamicImage,
@@ -195,29 +222,36 @@ impl TesseractAgent {
             .into_iter()
             .filter_map(|e| {
                 if e.element_type == feature.as_hocr_element() {
-                    // TODO: look if this errors
+                    // SAFETY: tesseract hOCR conversion always works
                     Some(e.get_layout_element().unwrap())
                 } else {
                     None
                 }
             })
             .collect();
-        
+
         self.inner = Some(inner);
 
         Ok(extracted_features)
     }
 }
 
+/// OCR Feature types. Useful for extracting text regions at a specific level.
 pub enum FeatureType {
+    /// Page
     Page,
+    /// Block
     Block,
+    /// Paragraph
     Para,
+    /// Line
     Line,
+    /// Word
     Word,
 }
 
 impl FeatureType {
+    /// Convert to hOCR element type.
     pub fn as_hocr_element(&self) -> &str {
         match self {
             FeatureType::Page => elements::OCR_PAGE,

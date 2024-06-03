@@ -1,12 +1,12 @@
 # layoutparser-ort
 
-impl support for tesseract agent etc.
-impl async support
-integrate geo types into LayoutElement
-clarify licensing
-rename library??
+A simplified port of [LayoutParser](https://github.com/Layout-Parser/layout-parser) for detecting layout elements on documents. Runs Detectron2 and YOLOX layout models from [unstructured-inference](https://github.com/Unstructured-IO/unstructured-inference/) in ONNX format through onnxruntime (bindings via [ort](https://github.com/pykeio/ort)). [Check out the examples for a quick start!](examples/)
 
-## libraries to port from and view
+## License
+
+`layoutparser-ort` mirrors its API from [LayoutParser](https://github.com/Layout-Parser/layout-parser) and includes preprocessing code derived from [unstructured-inference](https://github.com/Unstructured-IO/unstructured-inference/), both licensed under the Apache License 2.0. Likewise, `layoutparser-ort` is licensed under the Apache License 2.0.
+
+## Appendix: Similar libraries
 - [surya](https://github.com/VikParuchuri/surya): OCR, layout analysis, reading order, line detection in 90+ languages
     - SegFormer (transformers: SegFormer), Donut (transformers: Donut), CRAFT (pytorch)
     - License: GPLv3.0 (code), cc-by-nc-sa-4.0 (models)

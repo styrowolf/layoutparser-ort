@@ -1,9 +1,13 @@
-use layoutparser_ort::{models::detectron2::{Detectron2Model, Detectron2PretrainedModel}, ocr::{FeatureType, TesseractAgent}, Result};
+use layoutparser_ort::{
+    models::{Detectron2Model, Detectron2PretrainedModels},
+    ocr::TesseractAgent,
+    Result,
+};
 
 fn main() -> Result<()> {
     let img = image::open("examples/data/paper-example.png").unwrap();
 
-    let model = Detectron2Model::pretrained(Detectron2PretrainedModel::FASTER_RCNN_R_50_FPN_3X)?;
+    let model = Detectron2Model::pretrained(Detectron2PretrainedModels::FASTER_RCNN_R_50_FPN_3X)?;
 
     let mut predictions = model.predict(&img)?;
 

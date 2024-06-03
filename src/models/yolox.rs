@@ -8,6 +8,7 @@ use ort::{Session, SessionBuilder, SessionOutputs};
 pub use crate::error::{Error, Result};
 use crate::{utils, LayoutElement};
 
+/// A [`YOLOX`](https://github.com/Megvii-BaseDetection/YOLOX)-based model.
 pub struct YOLOXModel {
     model_name: String,
     model: ort::Session,
@@ -16,33 +17,38 @@ pub struct YOLOXModel {
 }
 
 #[derive(PartialEq)]
-pub enum YOLOXPretrainedModel {
+/// Pretrained YOLOX-based models from Hugging Face.
+pub enum YOLOXPretrainedModels {
     Large,
     LargeQuantized,
     Tiny,
 }
 
-impl YOLOXPretrainedModel {
+impl YOLOXPretrainedModels {
+     /// Model name.
     pub fn name(&self) -> &str {
         match self {
             _ => self.hf_repo(),
         }
     }
 
+    /// Hugging Face repository for this model.
     pub fn hf_repo(&self) -> &str {
         match self {
             _ => "unstructuredio/yolo_x_layout",
         }
     }
 
+    /// Path for this model file in Hugging Face repository.
     pub fn hf_filename(&self) -> &str {
         match self {
-            YOLOXPretrainedModel::Large => "yolox_l0.05.onnx",
-            YOLOXPretrainedModel::LargeQuantized => "yolox_l0.05_quantized.onnx",
-            YOLOXPretrainedModel::Tiny => "yolox_tiny.onnx",
+            YOLOXPretrainedModels::Large => "yolox_l0.05.onnx",
+            YOLOXPretrainedModels::LargeQuantized => "yolox_l0.05_quantized.onnx",
+            YOLOXPretrainedModels::Tiny => "yolox_tiny.onnx",
         }
     }
 
+    /// The label map for this model.
     pub fn label_map(&self) -> Vec<(i64, String)> {
         match self {
             _ => Vec::from_iter(
@@ -64,19 +70,16 @@ impl YOLOXPretrainedModel {
             ),
         }
     }
-
-    pub fn confidence_score_index(&self) -> usize {
-        match self {
-            _ => 0,
-        }
-    }
 }
 
 impl YOLOXModel {
+    /// Required input image width.
     pub const REQUIRED_WIDTH: u32 = 768;
+    /// Required input image height.
     pub const REQUIRED_HEIGHT: u32 = 1024;
 
-    pub fn pretrained(p_model: YOLOXPretrainedModel) -> Result<Self> {
+    /// Construct a [`YOLOXModel`] with a pretrained model downloaded from Hugging Face.
+    pub fn pretrained(p_model: YOLOXPretrainedModels) -> Result<Self> {
         let session_builder = Session::builder()?;
         let api = hf_hub::api::sync::Api::new()?;
         let filename = api
@@ -89,12 +92,13 @@ impl YOLOXModel {
             model_name: p_model.name().to_string(),
             model,
             label_map: p_model.label_map(),
-            is_quantized: p_model == YOLOXPretrainedModel::LargeQuantized,
+            is_quantized: p_model == YOLOXPretrainedModels::LargeQuantized,
         })
     }
 
+        /// Construct a configured [`YOLOXModel`] with a pretrained model downloaded from Hugging Face.
     pub fn configure_pretrained(
-        p_model: YOLOXPretrainedModel,
+        p_model: YOLOXPretrainedModels,
         session_builder: SessionBuilder,
     ) -> Result<Self> {
         let api = hf_hub::api::sync::Api::new()?;
@@ -108,10 +112,11 @@ impl YOLOXModel {
             model_name: p_model.name().to_string(),
             model,
             label_map: p_model.label_map(),
-            is_quantized: p_model == YOLOXPretrainedModel::LargeQuantized,
+            is_quantized: p_model == YOLOXPretrainedModels::LargeQuantized,
         })
     }
 
+    /// Construct a [`YOLOXModel`] from a model file.
     pub fn new_from_file(
         file_path: &str,
         model_name: &str,
@@ -129,7 +134,9 @@ impl YOLOXModel {
         })
     }
 
+    /// Predict [`LayoutElement`]s from the image provided.
     pub fn predict(&self, img: &image::DynamicImage) -> Result<Vec<LayoutElement>> {
+        // UNWRAP SAFETY: shape unwraps are never a problem because we know the size of the output tensor
         let (input, r) = self.preprocess(img);
 
         let input_name = &self.model.inputs[0].name;
@@ -516,13 +523,14 @@ fn extract_bbox_etc(v: &Vec<f32>) -> [f32; 6] {
     [v[0], v[1], v[2], v[3], v[4], v[5]]
 }
 
+// from: https://github.com/jreniel/meshgridrs (licensed under MIT)
 #[derive(PartialEq)]
-pub enum Indexing {
+pub(crate) enum Indexing {
     Xy,
     Ij,
 }
-// from: https://github.com/jreniel/meshgridrs
-pub fn meshgrid<T>(
+// from: https://github.com/jreniel/meshgridrs (licensed under MIT)
+pub(crate) fn meshgrid<T>(
     xi: &[Array1<T>],
     indexing: Indexing,
 ) -> Vec<ArrayBase<OwnedRepr<T>, Dim<ndarray::IxDynImpl>>>

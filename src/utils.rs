@@ -19,7 +19,7 @@ pub(crate) fn vec_to_bbox<T: Copy>(v: Vec<T>) -> [T; 4] {
 }
 
 #[cfg(feature = "save")]
-pub mod save {
+pub(crate) mod save {
     use ndarray::{Array1, Array2};
 
     pub fn savetxt(a: &Array2<f32>, filename: &str) {

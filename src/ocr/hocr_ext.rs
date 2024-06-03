@@ -1,6 +1,6 @@
-use hocr_parser::element::Element;
 use hocr_parser::spec_definitions::elements;
 use hocr_parser::spec_definitions::properties;
+use hocr_parser::Element;
 
 use thiserror::Error;
 
@@ -8,6 +8,7 @@ use crate::utils::vec_to_bbox;
 use crate::LayoutElement;
 
 #[derive(Debug, Error)]
+/// hOCR element conversion error variants
 pub enum HOCRElementConversionError {
     #[error("No bounding box found in element properties")]
     NoBoundingBoxFound,

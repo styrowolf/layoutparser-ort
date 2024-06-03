@@ -5,6 +5,7 @@ use ort::{Session, SessionBuilder, SessionOutputs};
 pub use crate::error::{Error, Result};
 use crate::{utils::vec_to_bbox, LayoutElement};
 
+/// A [`Detectron2`](https://github.com/facebookresearch/detectron2)-based model.
 pub struct Detectron2Model {
     model_name: String,
     model: ort::Session,
@@ -14,18 +15,21 @@ pub struct Detectron2Model {
 }
 
 #[allow(non_camel_case_types)]
-pub enum Detectron2PretrainedModel {
+/// Pretrained Detectron2-based models from Hugging Face.
+pub enum Detectron2PretrainedModels {
     FASTER_RCNN_R_50_FPN_3X,
     MASK_RCNN_X_101_32X8D_FPN_3x,
 }
 
-impl Detectron2PretrainedModel {
+impl Detectron2PretrainedModels {
+    /// Model name.
     pub fn name(&self) -> &str {
         match self {
             _ => self.hf_repo(),
         }
     }
 
+    /// Hugging Face repository for this model.
     pub fn hf_repo(&self) -> &str {
         match self {
             Self::FASTER_RCNN_R_50_FPN_3X => "unstructuredio/detectron2_faster_rcnn_R_50_FPN_3x",
@@ -35,6 +39,7 @@ impl Detectron2PretrainedModel {
         }
     }
 
+    /// Path for this model file in Hugging Face repository.
     pub fn hf_filename(&self) -> &str {
         match self {
             Self::FASTER_RCNN_R_50_FPN_3X => "model.onnx",
@@ -42,16 +47,17 @@ impl Detectron2PretrainedModel {
         }
     }
 
+    /// The label map for this model.
     pub fn label_map(&self) -> Vec<(i64, String)> {
         match self {
-            Detectron2PretrainedModel::FASTER_RCNN_R_50_FPN_3X => {
+            Detectron2PretrainedModels::FASTER_RCNN_R_50_FPN_3X => {
                 ["Text", "Title", "List", "Table", "Figure"]
                     .iter()
                     .enumerate()
                     .map(|(i, l)| (i as i64, l.to_string()))
                     .collect()
             }
-            Detectron2PretrainedModel::MASK_RCNN_X_101_32X8D_FPN_3x => {
+            Detectron2PretrainedModels::MASK_RCNN_X_101_32X8D_FPN_3x => {
                 ["Text", "Title", "List", "Table", "Figure"]
                     .iter()
                     .enumerate()
@@ -61,20 +67,25 @@ impl Detectron2PretrainedModel {
         }
     }
 
+    /// Index for the confidence score in this model's outputs.
     pub fn confidence_score_index(&self) -> usize {
         match self {
-            Detectron2PretrainedModel::FASTER_RCNN_R_50_FPN_3X => 2,
-            Detectron2PretrainedModel::MASK_RCNN_X_101_32X8D_FPN_3x => 3,
+            Detectron2PretrainedModels::FASTER_RCNN_R_50_FPN_3X => 2,
+            Detectron2PretrainedModels::MASK_RCNN_X_101_32X8D_FPN_3x => 3,
         }
     }
 }
 
 impl Detectron2Model {
+    /// Required input image width.
     pub const REQUIRED_WIDTH: u32 = 800;
+    /// Required input image height.
     pub const REQUIRED_HEIGHT: u32 = 1035;
+    /// Default confidence threshold for detections.
     pub const DEFAULT_CONFIDENCE_THRESHOLD: f32 = 0.8;
 
-    pub fn pretrained(p_model: Detectron2PretrainedModel) -> Result<Self> {
+    /// Construct a [`Detectron2Model`] with a pretrained model downloaded from Hugging Face.
+    pub fn pretrained(p_model: Detectron2PretrainedModels) -> Result<Self> {
         let session_builder = Session::builder()?;
         let api = hf_hub::api::sync::Api::new()?;
         let filename = api
@@ -92,8 +103,9 @@ impl Detectron2Model {
         })
     }
 
+    /// Construct a configured [`Detectron2Model`] with a pretrained model downloaded from Hugging Face.
     pub fn configure_pretrained(
-        p_model: Detectron2PretrainedModel,
+        p_model: Detectron2PretrainedModels,
         confidence_threshold: f32,
         session_builder: SessionBuilder,
     ) -> Result<Self> {
@@ -113,6 +125,7 @@ impl Detectron2Model {
         })
     }
 
+    /// Construct a [`Detectron2Model`] from a model file.
     pub fn new_from_file(
         file_path: &str,
         model_name: &str,
@@ -132,6 +145,7 @@ impl Detectron2Model {
         })
     }
 
+    /// Predict [`LayoutElement`]s from the image provided.
     pub fn predict(&self, img: &image::DynamicImage) -> Result<Vec<LayoutElement>> {
         let (img_width, img_height, input) = self.preprocess(img);
 
@@ -203,7 +217,7 @@ impl Detectron2Model {
                 .label_map
                 .iter()
                 .find(|(l_i, _)| l_i == label)
-                .unwrap()
+                .unwrap() // SAFETY: the model always yields one of these labels
                 .1;
 
             if *confidence_score > self.confidence_threshold as f32 {
