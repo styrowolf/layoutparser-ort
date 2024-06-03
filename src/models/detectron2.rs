@@ -2,7 +2,7 @@ use image::imageops;
 use ndarray::{Array, ArrayBase, Dim, OwnedRepr};
 use ort::{Session, SessionBuilder, SessionOutputs};
 
-pub use crate::error::{Error, Result};
+pub use crate::error::Result;
 use crate::{utils::vec_to_bbox, LayoutElement};
 
 /// A [`Detectron2`](https://github.com/facebookresearch/detectron2)-based model.

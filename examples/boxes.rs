@@ -11,7 +11,10 @@ fn main() -> Result<()> {
     let predictions = model.predict(&img)?;
 
     for pred in &predictions {
-        println!("Label: {}, Confidence: {}, Box: {:?}", pred.element_type, pred.confidence, pred.bbox);
+        println!(
+            "Label: {}, Confidence: {}, Box: {:?}",
+            pred.element_type, pred.confidence, pred.bbox
+        );
     }
 
     println!("{:?}", predictions);

@@ -5,7 +5,7 @@ use ndarray::{
 };
 use ort::{Session, SessionBuilder, SessionOutputs};
 
-pub use crate::error::{Error, Result};
+pub use crate::error::Result;
 use crate::{utils, LayoutElement};
 
 /// A [`YOLOX`](https://github.com/Megvii-BaseDetection/YOLOX)-based model.
@@ -25,7 +25,7 @@ pub enum YOLOXPretrainedModels {
 }
 
 impl YOLOXPretrainedModels {
-     /// Model name.
+    /// Model name.
     pub fn name(&self) -> &str {
         match self {
             _ => self.hf_repo(),
@@ -96,7 +96,7 @@ impl YOLOXModel {
         })
     }
 
-        /// Construct a configured [`YOLOXModel`] with a pretrained model downloaded from Hugging Face.
+    /// Construct a configured [`YOLOXModel`] with a pretrained model downloaded from Hugging Face.
     pub fn configure_pretrained(
         p_model: YOLOXPretrainedModels,
         session_builder: SessionBuilder,

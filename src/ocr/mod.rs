@@ -5,10 +5,10 @@ mod hocr_ext;
 use hocr_ext::HOCRElementConversion;
 pub use hocr_ext::HOCRElementConversionError;
 
+pub use hocr_parser::roxmltree;
 use hocr_parser::spec_definitions::elements;
 use hocr_parser::Element;
 use hocr_parser::HOCRParserError;
-pub use hocr_parser::roxmltree;
 
 pub use hocr_parser;
 
@@ -16,8 +16,8 @@ use crate::{LayoutElement, Result};
 use tesseract::{Tesseract, TesseractError};
 
 /// The Tesseract OCR Agent.
-/// 
-/// Constructing the agent may require a valid `tessdata`` directory 
+///
+/// Constructing the agent may require a valid `tessdata`` directory
 /// depending on the constructor.
 pub struct TesseractAgent {
     arguments: TesseractInitArguments,
